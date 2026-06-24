@@ -12,6 +12,7 @@ SavegameEditor={
 		RUPEES_OFFSET:			0x2c3a4,
 		MATERIALS_OFFSET:		0x2c14e,
 		MATERIALS_DISCOVERED:	0x2c2dd,
+		CHARACTERS_OFFSET:		0x2bcad,
 
 		MATERIALS:[
 			/* fruits */
@@ -205,6 +206,29 @@ SavegameEditor={
 			{index:150, category:'special', label:'Ethereal Stone'}
 
 			//{index:???, category:'special', label:'Report: Hidden Battles (GoR)', dlc:true}
+		],
+		CHARACTERS:[
+			{index:0, category:'characters', label:'Link'},
+			{index:1, category:'characters', label:'Zelda'},
+			{index:2, category:'characters', label:'King Rhoam'},
+			{index:3, category:'characters', label:'Mipha'},
+			{index:4, category:'characters', label:'Daruk'},
+			{index:5, category:'characters', label:'Revali'},
+			{index:6, category:'characters', label:'Urbosa'},
+			{index:7, category:'characters', label:'Impa'},
+			{index:8, category:'characters', label:'Sidon'},
+			{index:9, category:'characters', label:'Yunobo'},
+			{index:10, category:'characters', label:'Teba'},
+			{index:11, category:'characters', label:'Riju'},
+			{index:12, category:'characters', label:'Hestu'},
+			{index:13, category:'characters', label:'Great Fairies'},
+			{index:14, category:'characters', label:'Master Kohga'},
+			{index:15, category:'characters', label:'Monk Maz Koshia'},
+			{index:16, category:'characters', label:'Terrako'},
+			{index:17, category:'characters', label:'Calamity Ganon'},
+			{index:18, category:'characters', label:'Battle-Tested Guardian'},
+			{index:19, category:'characters', label:'Purah & Robbie'},
+			{index:20, category:'characters', label:'Sooga'}
 		]
 	},
 
@@ -214,6 +238,9 @@ SavegameEditor={
 		return (tempFile.fileSize==1048576)
 	},
 
+	_getCharacterOffset: function(index){
+    	return this.Constants.CHARACTERS_OFFSET + index * 30;
+	},
 
 	/* load function */
 	load:function(){
@@ -230,7 +257,16 @@ SavegameEditor={
 				firstCol.children[0].style.fontStyle='italic';
 			get('row-materials-'+material.category).appendChild(firstCol);
 			get('row-materials-'+material.category).appendChild(col(1, inputNumber('material'+i, 0, itemCap, tempFile.readU16(this.Constants.MATERIALS_OFFSET+material.index*2))));
-		}
+		};
+		/* CHARACTERS */
+		for(var i=0; i<this.Constants.CHARACTERS.length; i++){
+			const character = this.Constants.CHARACTERS[i];
+			const base = this._getCharacterOffset(character.index);
+			const level = tempFile.readU8(base) + 1;
+			const firstCol = col(3, label('number-character'+i, character.label));
+			get('row-characters').appendChild(firstCol);
+			get('row-characters').appendChild(col(1, inputNumber('character'+i+'-level', 1, 100, level)));
+		};
 
 		const categories=this.Constants.MATERIALS.reduce((acc, material) => {
 			if(!acc.includes(material.category))
@@ -262,6 +298,12 @@ SavegameEditor={
 				console.log(material.label + ' discovered');
 			}
 			tempFile.writeU16(this.Constants.MATERIALS_OFFSET+material.index*2, changedValue);
+		}
+		    /* CHARACTERS */
+		for(var i=0; i<this.Constants.CHARACTERS.length; i++){
+			const character=this.Constants.CHARACTERS[i];
+			const base=this._getCharacterOffset(character.index);
+			tempFile.writeU8(base, getValue('character'+i+'-level') - 1);
 		}
 	}
 }
